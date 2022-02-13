@@ -1,6 +1,5 @@
-# TODO: Import your dependencies.
-# For instance, below are some dependencies you might need if you are using Pytorch
-
+#TODO: Import your dependencies.
+#For instance, below are some dependencies you might need if you are using Pytorch
 import torch
 import argparse
 import os
@@ -11,34 +10,15 @@ from torchvision import models, transforms
 from torch import nn, optim
 from PIL import ImageFile
 
-# TODO: Import dependencies for Debugging and Profiling
-
-import smdebug.pytorch as smd
-from smdebug.pytorch import get_hook
-
 def test(model, test_loader, criterion, device):
-    """
-    TODO: Complete this function that can take a model and a
-          testing data loader and will get the test accuracy/loss of the model
-          Remember to include any debugging/profiling hooks that you might need
-    """
-    hook = smd.Hook(
-        out_dir='s3://sagemaker-us-east-1-378124415251/hook-output/',
-        export_tensorboard=False,
-        tensorboard_dir=None,
-        dry_run=False,
-        reduction_config=None,
-        save_config=None,
-        include_regex=None,
-        include_collections=None,
-        save_all=False,
-        include_workers="one"
-    )
+    '''
+    TODO: Complete this function that can take a model and a 
+          testing data loader and will get the test accuray/loss of the model
+    '''
 
     print('Testing Model on Whole Testing Dataset')
 
     model.eval()  # Setting model to evaluation mode
-    hook.set_mode(smd.modes.PREDICT)
     running_loss = 0  # Sum of losses for average loss calculation
     running_corrects = 0  # Sum of correct predictions for accuracy calculation
 
@@ -54,6 +34,8 @@ def test(model, test_loader, criterion, device):
         running_loss += loss.item() * input_tensor.size(0)
         running_corrects += torch.sum(preds == labels)
 
+
+
     # End of iteration over test loader data
 
     # Calculation of average loss:
@@ -61,31 +43,18 @@ def test(model, test_loader, criterion, device):
     # Calculation of accuracy:
     acc = running_corrects / len(test_loader.dataset)
 
-    print('Testing Completed!')
-    print(f'Testing Accuracy: {100 * acc} %, Testing loss: {avg_loss}')
-
-
-def train(model, epochs, train_loader, validation_loader, criterion, optimizer, device):
-    """
-    TODO: Complete this function that can take a model and
-          data loaders for training and will get train the model
-          Remember to include any debugging/profiling hooks that you might need
-    """
-
-    hook = smd.Hook(
-        out_dir='s3://sagemaker-us-east-1-378124415251/hook-output/',
-        export_tensorboard=False,
-        tensorboard_dir=None,
-        dry_run=False,
-        reduction_config=None,
-        save_config=None,
-        include_regex=None,
-        include_collections=None,
-        save_all=False,
-        include_workers="one"
+    print ('Printing Log')
+    print(
+        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
+            avg_loss, running_corrects, len(test_loader.dataset), 100.0 * acc
+        )
     )
 
-    hook.register_loss(criterion)
+def train(model, epochs, train_loader, validation_loader, criterion, optimizer, device):
+    '''
+    TODO: Complete this function that can take a model and
+          data loaders for training and will get train the model
+    '''
 
     loader = {'train': train_loader, 'eval': validation_loader}
     epochs = epochs
@@ -98,10 +67,8 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
             # Sets model to train or evaluation modes
             if phase == 'train':
                 model.train()
-                hook.set_mode(smd.modes.TRAIN)
             else:
                 model.eval()
-                hook.set_mode(smd.modes.EVAL)
 
             # Initiates cumulative variables IN EACH EPOCH:
             accum_loss = 0  # Sum of all the loss values (for each prediction)
@@ -161,13 +128,12 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
 
         if loss_counter > 0:  # If the avg_loss in evaluation phase increased, the model started to diverge.
             break
-
-
+    
 def net():
-    """
+    '''
     TODO: Complete this function that initializes your model
           Remember to use a pretrained model
-    """
+    '''
     model = models.resnet50(pretrained=True)
 
     for param in model.parameters():
@@ -184,12 +150,12 @@ def net():
     
     return model
 
-
 def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_batch_size):
-    """
+    '''
     This is an optional function that you may or may not need to implement
     depending on whether you need to use data loaders or not
-    """
+    '''
+
     training_transform = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.Resize((224, 224)),
@@ -213,51 +179,49 @@ def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_ba
 
 
 def main(args):
-    
-    ImageFile.LOAD_TRUNCATED_IMAGES = True
-    
-    """
-    TODO: Initialize a model by calling the net function
 
-    DONE
-    """
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+    '''
+    TODO: Initialize a model by calling the net function
+    '''
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
 
     model = net()
     model = model.to(device)
-
+    
     '''
     TODO: Create your loss and optimizer
-
-    DONE
     '''
+
     loss_criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adagrad(model.parameters(), lr=args.lr)
-
+    
     '''
     TODO: Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
     '''
+
     train_loader, validation_loader, test_loader = create_data_loaders(args.train_dir, args.test_dir, args.eval_dir,
                                                                        args.batch_size, args.test_batch_size)
 
     train(model, args.epochs, train_loader, validation_loader, loss_criterion, optimizer, device)
-
+    
     '''
     TODO: Test the model to see its accuracy
     '''
     test(model, test_loader, loss_criterion, device)
-
+    
     '''
     TODO: Save the trained model
     '''
-    path = './model_finetuning'
+    path = './model_hpo_optimization'
     torch.save(model, path)
 
 
-if __name__ == '__main__':
+if __name__=='__main__':
     parser = argparse.ArgumentParser()
     '''
     TODO: Specify any training args that you might need
