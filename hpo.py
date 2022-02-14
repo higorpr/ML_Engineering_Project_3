@@ -12,7 +12,7 @@ from PIL import ImageFile
 
 def test(model, test_loader, criterion, device):
     '''
-    TODO: Complete this function that can take a model and a 
+    TODO: Complete this function that can take a model and a
           testing data loader and will get the test accuray/loss of the model
     '''
 
@@ -128,7 +128,7 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
 
         if loss_counter > 0:  # If the avg_loss in evaluation phase increased, the model started to diverge.
             break
-    
+
 def net():
     '''
     TODO: Complete this function that initializes your model
@@ -146,8 +146,6 @@ def net():
         nn.Linear(128, 133)
     )
 
-    model.fc = nn.Sequential(nn.Linear(num_features, 133))
-    
     return model
 
 def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_batch_size):
@@ -191,14 +189,14 @@ def main(args):
 
     model = net()
     model = model.to(device)
-    
+
     '''
     TODO: Create your loss and optimizer
     '''
 
     loss_criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adagrad(model.parameters(), lr=args.lr)
-    
+
     '''
     TODO: Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
@@ -208,12 +206,12 @@ def main(args):
                                                                        args.batch_size, args.test_batch_size)
 
     train(model, args.epochs, train_loader, validation_loader, loss_criterion, optimizer, device)
-    
+
     '''
     TODO: Test the model to see its accuracy
     '''
     test(model, test_loader, loss_criterion, device)
-    
+
     '''
     TODO: Save the trained model
     '''

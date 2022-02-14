@@ -179,8 +179,6 @@ def net():
         nn.ReLU(),
         nn.Linear(128, 133)
     )
-
-    model.fc = nn.Sequential(nn.Linear(num_features, 133))
     
     return model
 
@@ -213,9 +211,9 @@ def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_ba
 
 
 def main(args):
-    
+
     ImageFile.LOAD_TRUNCATED_IMAGES = True
-    
+
     """
     TODO: Initialize a model by calling the net function
 
