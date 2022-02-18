@@ -4,6 +4,7 @@
 import torch
 import argparse
 import os
+import json
 
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
@@ -11,10 +12,34 @@ from torchvision import models, transforms
 from torch import nn, optim
 from PIL import ImageFile
 
+
 # TODO: Import dependencies for Debugging and Profiling
 
 import smdebug.pytorch as smd
-from smdebug.pytorch import get_hook
+
+def model_fn(model_dir):
+    model = Net().to(device)
+    model.eval()
+    
+    return model
+
+def input_fn(request_body, request_content_type):
+    assert request_content_type == 'application/json'
+    data = json.loads(request_body)['inputs']
+    data = torch.tensor(data, dtype=torch.float32, device=device)
+    
+    return data
+
+def predict_fn(input_object, model):
+    with torch.no_grad():
+        prediction = model(input_object)
+        
+    return prediction
+
+def output_fn(predictions, content_type):
+    assert content_type == 'application/json'
+    res = predictions.cpu().numpy().tolist()
+    return json.dumps(res)
 
 def test(model, test_loader, criterion, device):
     """
@@ -22,23 +47,10 @@ def test(model, test_loader, criterion, device):
           testing data loader and will get the test accuracy/loss of the model
           Remember to include any debugging/profiling hooks that you might need
     """
-    hook = smd.Hook(
-        out_dir='s3://sagemaker-us-east-1-378124415251/hook-output/',
-        export_tensorboard=False,
-        tensorboard_dir=None,
-        dry_run=False,
-        reduction_config=None,
-        save_config=None,
-        include_regex=None,
-        include_collections=None,
-        save_all=False,
-        include_workers="one"
-    )
 
     print('Testing Model on Whole Testing Dataset')
 
     model.eval()  # Setting model to evaluation mode
-    hook.set_mode(smd.modes.PREDICT)
     running_loss = 0  # Sum of losses for average loss calculation
     running_corrects = 0  # Sum of correct predictions for accuracy calculation
 
@@ -60,9 +72,13 @@ def test(model, test_loader, criterion, device):
     avg_loss = running_loss / len(test_loader.dataset)
     # Calculation of accuracy:
     acc = running_corrects / len(test_loader.dataset)
-
-    print('Testing Completed!')
-    print(f'Testing Accuracy: {100 * acc} %, Testing loss: {avg_loss}')
+    
+    print ('Printing Log')
+    print(
+        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
+            avg_loss, running_corrects, len(test_loader.dataset), 100.0 * acc
+        )
+    )
 
 
 def train(model, epochs, train_loader, validation_loader, criterion, optimizer, device):
@@ -71,22 +87,11 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     """
-
-    hook = smd.Hook(
-        out_dir='s3://sagemaker-us-east-1-378124415251/hook-output/',
-        export_tensorboard=False,
-        tensorboard_dir=None,
-        dry_run=False,
-        reduction_config=None,
-        save_config=None,
-        include_regex=None,
-        include_collections=None,
-        save_all=False,
-        include_workers="one"
-    )
-
+    #create hook  
+    hook = smd.Hook.create_from_json_file()
+    hook.register_module(model)
     hook.register_loss(criterion)
-
+    
     loader = {'train': train_loader, 'eval': validation_loader}
     epochs = epochs
     best_loss = 1e6
@@ -149,8 +154,8 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
 
                 # Section that trains and evaluates on a portion of the dataset
                 # Comment if you want to train on the whole dataset:
-                if samples_ran >= (0.25 * len(loader[phase].dataset)):
-                    break
+#                 if samples_ran >= (0.5 * len(loader[phase].dataset)):
+#                     break
 
             if phase == 'eval':
                 avg_epoch_loss = accum_loss / samples_ran
@@ -182,7 +187,6 @@ def net():
     
     return model
 
-
 def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_batch_size):
     """
     This is an optional function that you may or may not need to implement
@@ -211,7 +215,7 @@ def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_ba
 
 
 def main(args):
-
+    
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     """
@@ -251,8 +255,8 @@ def main(args):
     '''
     TODO: Save the trained model
     '''
-    path = './model_finetuning'
-    torch.save(model, path)
+    with open(os.path.join(args.model_dir, 'model.pth'), "wb") as f:
+        torch.save(model.state_dict(), f)
 
 
 if __name__ == '__main__':
