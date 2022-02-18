@@ -1,10 +1,10 @@
 # TODO: Import your dependencies.
 # For instance, below are some dependencies you might need if you are using Pytorch
 
-import torch
 import argparse
 import os
-import json
+import torch
+import smdebug.pytorch as smd
 
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
@@ -13,33 +13,25 @@ from torch import nn, optim
 from PIL import ImageFile
 
 
-# TODO: Import dependencies for Debugging and Profiling
+def net():
+    """
+    TODO: Complete this function that initializes your model
+          Remember to use a pretrained model
+    """
+    model = models.resnet50(pretrained=True)
 
-import smdebug.pytorch as smd
+    for param in model.parameters():
+        param.requires_grad = False
 
-def model_fn(model_dir):
-    model = Net().to(device)
-    model.eval()
-    
+    num_features = model.fc.in_features
+    model.fc = nn.Sequential(
+        nn.Linear(num_features, 128),
+        nn.ReLU(),
+        nn.Linear(128, 133)
+    )
+
     return model
 
-def input_fn(request_body, request_content_type):
-    assert request_content_type == 'application/json'
-    data = json.loads(request_body)['inputs']
-    data = torch.tensor(data, dtype=torch.float32, device=device)
-    
-    return data
-
-def predict_fn(input_object, model):
-    with torch.no_grad():
-        prediction = model(input_object)
-        
-    return prediction
-
-def output_fn(predictions, content_type):
-    assert content_type == 'application/json'
-    res = predictions.cpu().numpy().tolist()
-    return json.dumps(res)
 
 def test(model, test_loader, criterion, device):
     """
@@ -72,8 +64,8 @@ def test(model, test_loader, criterion, device):
     avg_loss = running_loss / len(test_loader.dataset)
     # Calculation of accuracy:
     acc = running_corrects / len(test_loader.dataset)
-    
-    print ('Printing Log')
+
+    print('Printing Log')
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
             avg_loss, running_corrects, len(test_loader.dataset), 100.0 * acc
@@ -87,11 +79,11 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     """
-    #create hook  
+    # create hook  
     hook = smd.Hook.create_from_json_file()
     hook.register_module(model)
     hook.register_loss(criterion)
-    
+
     loader = {'train': train_loader, 'eval': validation_loader}
     epochs = epochs
     best_loss = 1e6
@@ -154,8 +146,8 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
 
                 # Section that trains and evaluates on a portion of the dataset
                 # Comment if you want to train on the whole dataset:
-#                 if samples_ran >= (0.5 * len(loader[phase].dataset)):
-#                     break
+            #                 if samples_ran >= (0.5 * len(loader[phase].dataset)):
+            #                     break
 
             if phase == 'eval':
                 avg_epoch_loss = accum_loss / samples_ran
@@ -167,25 +159,6 @@ def train(model, epochs, train_loader, validation_loader, criterion, optimizer, 
         if loss_counter > 0:  # If the avg_loss in evaluation phase increased, the model started to diverge.
             break
 
-
-def net():
-    """
-    TODO: Complete this function that initializes your model
-          Remember to use a pretrained model
-    """
-    model = models.resnet50(pretrained=True)
-
-    for param in model.parameters():
-        param.requires_grad = False
-
-    num_features = model.fc.in_features
-    model.fc = nn.Sequential(
-        nn.Linear(num_features, 128),
-        nn.ReLU(),
-        nn.Linear(128, 133)
-    )
-    
-    return model
 
 def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_batch_size):
     """
@@ -215,7 +188,6 @@ def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_ba
 
 
 def main(args):
-    
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     """
