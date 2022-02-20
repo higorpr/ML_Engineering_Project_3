@@ -177,6 +177,9 @@ def create_data_loaders(train_dir, test_dir, eval_dir, train_batch_size, test_ba
 def main(args):
 
     ImageFile.LOAD_TRUNCATED_IMAGES = True
+    print(f'Log entry: Train batch size:{args.batch_size}')
+    print(f'Log entry: Learning rate:{args.lr}')
+    print(f'Log entry: Number of epochs:{args.epochs}')
 
     '''
     TODO: Initialize a model by calling the net function

@@ -24,6 +24,7 @@ def Net():
     for param in model.parameters():
         param.requires_grad = False   
 
+    num_features = model.fc.in_features
     model.fc = nn.Sequential(
         nn.Linear(num_features, 128),
         nn.ReLU(),
