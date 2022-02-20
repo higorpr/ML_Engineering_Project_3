@@ -40,7 +40,7 @@
  The main learning goals for this project were:
  - Perform hyperparameter optimization on the pretrained imported model (by fine-tuning parameters like learning rate of the model)
  - Observe instance metrics and model variables throughout training using sagemaker profiler and debugger (smdebugger)
- - Deploy the optimized model to a sagemaker endpoint and query it in order to obtain predictions
+ - Deploy the optimized model to a Sagemaker endpoint and query it in order to obtain predictions
 
  A diagram of the project summarizing the objectives and workflow can be seen below:
  ![Dog Breed Classification Project Workflow](images/project-diagram.png)
@@ -53,7 +53,7 @@ List of files:
  - train_and_deploy.ipynb: Jupyter notebook used to download data, create models, define hyperparameters tuning search space, extract information, create profiler and debugger reports, deploy models and query the endpoint.
  - hpo.py: Python training script used for hyperparameter optimization.
  - train_model.py: Python training script used for profiler and debugger insertion.
- - inference.py: Python script used for the creation of the PyTorch model deployed to the endpoint. It contained the rules for how the model would be handled by sagemaker, how the prediction requests would be processed by sagemaker and delivered to the deployed model and the transformations that the input data for the predictions would undergo in order to be used by the model.
+ - inference.py: Python script used for the creation of the PyTorch model deployed to the endpoint. It contained the rules for how the model would be handled by Sagemaker, how the prediction requests would be processed by Sagemaker and delivered to the deployed model and the transformations that the input data for the predictions would undergo in order to be used by the model.
 
  Markdown cells and comments in code cells present in the train_and_deploy notebook were used to assist the understanding of the code.
 
@@ -108,6 +108,9 @@ for file in files:
 
  One of the outputs for these queries was:
  ![Endpoint test](images/prediction_output.png)
+
+ Active endpoint on Sagemaker platform:
+ ![Active endpoint on Sagemker ](images/working_endpoint.jpg)
 
 
 ## Licensing, Authors, Acknowledgements<a name="licensing"></a>
