@@ -43,6 +43,7 @@
  - Deploy the optimized model to a Sagemaker endpoint and query it in order to obtain predictions
 
  A diagram of the project summarizing the objectives and workflow can be seen below:
+
  ![Dog Breed Classification Project Workflow](images/project-diagram.png)
 
 
@@ -60,18 +61,21 @@ List of files:
 ## Results<a name="results"></a>
 
 The hyperparameters iterated over during optimization were: learning rate, epochs and training batch size and the observed variable used for definition of the best model was average test loss. The results of the process is shown below:
+
 ![Results of all attemps](images/hpo_training_results.png)
 
 ![Best attempt detail](images/best_attempt.png)
 
 Details of the hyperparameter optimization development can be observed in its section in the project notebook.
 
-The Cloudwatch logs for the best optimization training job is also shown:
+The Cloudwatch logs for the best optimization training job is also shown in the image below:
+
 ![Accuracy and Test Average Loss for Best Model](images/hpo_training_results_1.png)
 
-The low accuracy value is due to training in a smaller portion of the training dataset. This decision was made in order to reduce AWS instance costs. When compared to the other training jobs, this was considerably better and. As a study, these results served the desired purpose.
+The low accuracy value is due to training in a smaller portion of the training dataset. This decision was made in order to reduce AWS instance costs. When compared to the other training jobs, this one was considerably better. As a study, these results served the desired purpose of parameter optimization.
 
 The results for the debugger observed variable (CrossEntropyLoss_output):
+
 ![Debugger Variable Plot](images/debugger_output.png)
 
 The profiler report is displayed in the project notebook.
@@ -107,9 +111,11 @@ for file in files:
 ```
 
  One of the outputs for these queries was:
+
  ![Endpoint test](images/prediction_output.png)
 
  Active endpoint on Sagemaker platform:
+ 
  ![Active endpoint on Sagemker ](images/working_endpoint.jpg)
 
 
